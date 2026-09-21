@@ -1,0 +1,59 @@
+pages:
+  clock-page: {order: 0, layout: classic, theme: circuit}
+
+language: en
+
+location:
+  latitude: 29.2108
+  longitude: -81.0228
+  timezone:
+
+providers:
+  openmeteo:   {plugin: PiClock3.OpenMeteo}
+  metar:       {plugin: PiClock3.Metar, METAR: KDAB}
+  openfreemap: {plugin: PiClock3.OpenFreeMap}
+  librewxr:    {plugin: PiClock3.LibreWXR}
+
+widgets:
+  clock: {plugin: PiClock3.AnalogClock, region: clock}
+  date:  {plugin: PiClock3.Date, region: date}
+
+  forecast:
+    plugin: PiClock3.Forecast
+    region: forecast
+    forecast-provider: openmeteo
+
+  current-conditions:
+    plugin: PiClock3.CurrentConditions
+    region: current
+    conditions-provider: metar
+
+  radar1:
+    plugin: PiClock3.MapLoop
+    region: maps.1
+    base-provider: openfreemap
+    frame-provider: librewxr
+    style: terrain
+    zoom: 7
+    center:
+      latitude: '{location.latitude}'
+      longitude: '{location.longitude}'
+
+  radar2:
+    plugin: PiClock3.MapLoop
+    region: maps.2
+    base-provider: openfreemap
+    frame-provider: librewxr
+    style: terrain
+    zoom: 11
+    center:
+      latitude: '{location.latitude}'
+      longitude: '{location.longitude}'
+
+  tides:
+    plugin: plugins.tides
+    region: bottom
+    # station: "8720218"   # optional; Daytona Beach / nearby NOAA id
+    height-units: feet
+
+logging-level: info
