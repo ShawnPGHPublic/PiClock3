@@ -1,0 +1,33 @@
+name: CleanFirst
+description: Clock centered in the sun diagram, forecast in a row along the foot
+
+designed-for: '16:9'
+
+regions:
+
+  current:  {left: 0.0,  top: 0.09,   width: 0.21, height: 0.27}
+
+  maps:     {left: 0.0,  top: 0.38,   width: 0.21, height: 0.28,
+             border: radar}
+
+  model:    {right: 0.0, top: 0.09,   width: 0.21, height: 0.27}
+
+  radar:    {right: 0.0, top: 0.38,   width: 0.21, height: 0.28,
+             border: radar}
+
+  clock:    {width: 0.30, aspect: 1.0,
+             horizontal-center: 0.0, vertical-center: -0.11}
+
+  forecast: {left: 0.0,  bottom: 0.07, width: 1.0, height: 0.20,
+             border: true, repeat: {count: 6, direction: across, gap: 0.01}}
+
+  date:     {left: 0.0,  top: 0.0,    width: 1.0, height: 0.09, style: date}
+  foot:     {left: 0.0,  bottom: 0.0, width: 1.0, height: 0.07, style: foot}
+
+layout-style-settings:
+  date:
+    font-size: 0.62
+    qproperty-alignment: AlignCenter
+  foot:
+    font-size: 0.42
+    qproperty-alignment: AlignCenter

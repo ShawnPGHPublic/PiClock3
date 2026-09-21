@@ -1,0 +1,137 @@
+# PiClock3 - First Clean attempt at clock UI
+#
+# The CleanFirst theme draws that rather than a photograph: the sun's daily
+# circle, the horizon it crosses twice a year, and a spoke for every hour. From Daytona Beach, FL
+#
+pages:
+  clock-page: {order: 0, layout: CleanFirst, theme: CleanFirst}
+  maps-page:  {order: 1, layout: bigmaps, theme: CleanFirst}
+
+units: default
+
+# Gainesville, FL
+location:
+  latitude:  29.69
+  longitude:  -82.27167
+
+  # Blank means the machine's own zone, which is right when the clock
+  # sits where it is pointed.  Name a zone when it does not.
+  # time: 
+  # matters is the one at the other end of the flight.
+  timezone: 
+# Providers supply data and occupy no region.
+providers:
+
+  # the daily forecast.  No key: Open-Meteo asks for none.
+  openmeteo: {plugin: PiClock3.OpenMeteo}
+
+  # an actual observation from a nearby field
+  metar: {plugin: PiClock3.Metar, METAR: KFIN}
+
+  # base map under the radar - needs a key in ApiKeys.yaml
+  mapbox:     {plugin: PiClock3.Mapbox}
+  googlemaps: {plugin: PiClock3.GoogleMaps}
+
+  # radar tiles - one plugin per service, neither needs a key.  RainViewer
+  # stopped serving tiles above zoom 7 and returns a "Zoom Level Not
+  # Supported" card instead; LibreWXR still serves every zoom, so the
+  # close-in radars below point at it.
+  rainviewer: {plugin: PiClock3.RainViewer}
+  librewxr:   {plugin: PiClock3.LibreWXR}
+
+# Widgets occupy a region named by the page's layout, and draw in it.
+widgets:
+  clock:  {plugin: PiClock3.AnalogClock, region: clock}
+# clock:  {plugin: PiClock3.DigitalClock, region: clock}
+  date:   {plugin: PiClock3.Date,   region: date}
+  astral: {plugin: PiClock3.Astral, region: foot}
+
+  # one day in each cell of the layout's forecast column
+  forecast:
+    plugin: PiClock3.Forecast
+    region: forecast
+    forecast-provider: openmeteo
+    # six cells along the foot: the next three hours, then three days
+    hourly: 3
+    daily: 3
+    # six cells across a screen leaves each one narrow, so the day is
+    # abbreviated where the classic column spells it out
+    hour-format: '%a %-I%p'
+
+  # the strip along the bottom of the maps page
+  maps-caption:
+    plugin: PiClock3.DigitalClock
+    region: caption
+    format: "{plugin-data.now:%a %b} {plugin-data.now.day} {plugin-data.now.year}   {plugin-data.now:%H:%M:%S}"
+    lowercase: false
+    font-size: 0.75
+
+  current-conditions:
+    plugin: PiClock3.CurrentConditions
+    region: current
+    conditions-provider: metar
+
+  radar1:
+    plugin: PiClock3.MapLoop
+    region: maps
+    base-provider: mapbox        # or googlemaps, if that is the key you got
+    frame-provider: librewxr     # or rainviewer
+    label: 'Airport'
+    # the pale default is meant for dark satellite imagery and is the same
+    # brightness as ice.  Outlining it keeps the color every other example
+    # uses and still reads here, on snow and on open water both.
+    label-outline: true
+    zoom: 8
+    center:
+      latitude: '{location.latitude}'
+      longitude: '{location.longitude}'
+    markers:
+      - location:
+          latitude: '{location.latitude}'
+          longitude: '{location.longitude}'
+        color: red
+        image: teardrop-home
+  
+  # Add Tide clock here
+  tides:
+    plugin: plugins.tides
+    region: model
+    # station: "8720218"   # optional; Daytona Beach / nearby NOAA id
+    height-units: feet
+    footer-height: 0.14
+    footer-font-size: 0.38
+  radar2:
+    plugin: PiClock3.MapLoop
+    region: radar
+    base-provider: mapbox        # or googlemaps, if that is the key you got
+    frame-provider: librewxr     # or rainviewer
+    label: 'Florida'
+    label-outline: true
+    zoom: 5
+    center:
+      latitude:  29.69
+      longitude:  -82.27167
+
+  radar3:
+    plugin: PiClock3.MapLoop
+    region: radars.1
+    base-provider: mapbox        # or googlemaps, if that is the key you got
+    frame-provider: librewxr     # or rainviewer
+    zoom: 7
+    center:
+      latitude: '{location.latitude}'
+      longitude: '{location.longitude}'
+
+  radar4:
+    plugin: PiClock3.MapLoop
+    region: radars.2
+    base-provider: mapbox        # or googlemaps, if that is the key you got
+    frame-provider: librewxr     # or rainviewer
+    zoom: 11
+    center:
+      latitude: '{location.latitude}'
+      longitude: '{location.longitude}'
+
+logging-level: debug
+
+apikeys: !include ApiKeys.yaml

@@ -1,0 +1,18 @@
+description: >
+  24-hour NOAA tide curve with high and low times in a footer.
+  Uses api.tidesandcurrents.noaa.gov.  No API key.
+
+settings:
+  station:           {is: string}
+  datum:             {is: string}
+  height-units:      {is: string}
+  refresh:           {is: number, unit: minutes, range: [5, 1440]}
+  fill-color:        {is: color}
+  fill-opacity:      {is: number, range: [0, 1]}
+  now-color:         {is: color}
+  high-color:        {is: color}
+  low-color:         {is: color}
+  footer-height:     {is: size}
+  footer-font-size:  {is: font-size}
+  time-format:       {is: strftime}
+  show-station:      {is: boolean}

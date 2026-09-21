@@ -1,0 +1,21 @@
+kind: tides
+
+# NOAA 7-digit station id.  Empty = nearest tide-prediction station
+# to location.latitude / location.longitude
+station: ""
+
+datum: MLLW
+units: feet          # feet | meters
+refresh: 30          # minutes between NOAA fetches
+
+# curve
+fill-color: "#1b6b8a"
+fill-opacity: 0.45
+now-color: "#f4d35e"
+high-color: "#e8f4ff"
+low-color: "#9bb8c9"
+
+footer-height: 0.22          # fraction of the region
+footer-font-size: 0.42       # fraction of the footer band
+time-format: "%-I:%M%p"
+show-station: true
