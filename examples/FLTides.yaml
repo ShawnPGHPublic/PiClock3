@@ -9,14 +9,15 @@ pages:
 
 units: default
 
-# Gainesville, FL
+# Flagler Beach, FL
 location:
-  latitude:  29.69
-  longitude:  -82.27167
+  latitude: 29.4652
+  longitude: -81.20760
 
   # Blank means the machine's own zone, which is right when the clock
   # sits where it is pointed.  Name a zone when it does not.
-  # time: 
+  # McMurdo is the United States' station, but it keeps New Zealand
+  # time: everything flies in from Christchurch, so the clock that
   # matters is the one at the other end of the flight.
   timezone: 
 # Providers supply data and occupy no region.
@@ -39,10 +40,19 @@ providers:
   rainviewer: {plugin: PiClock3.RainViewer}
   librewxr:   {plugin: PiClock3.LibreWXR}
 
+kind-settings:
+  digital-clock:
+    lowercase: false
+    format: "{plugin-data.now:%-H:%M}"
+    font-family: "DSEG7 Classic"
+    font-weight: bold    
+    font-size: 0.3
+    color: '#ff1a00' 
+
 # Widgets occupy a region named by the page's layout, and draw in it.
 widgets:
-  clock:  {plugin: PiClock3.AnalogClock, region: clock}
-# clock:  {plugin: PiClock3.DigitalClock, region: clock}
+#  clock:  {plugin: PiClock3.AnalogClock, region: clock}
+  clock:  {plugin: PiClock3.DigitalClock, region: clock}
   date:   {plugin: PiClock3.Date,   region: date}
   astral: {plugin: PiClock3.Astral, region: foot}
 
@@ -76,7 +86,7 @@ widgets:
     region: maps
     base-provider: mapbox        # or googlemaps, if that is the key you got
     frame-provider: librewxr     # or rainviewer
-    label: 'Airport'
+    label: 'Flagler Airport'
     # the pale default is meant for dark satellite imagery and is the same
     # brightness as ice.  Outlining it keeps the color every other example
     # uses and still reads here, on snow and on open water both.
@@ -91,12 +101,20 @@ widgets:
           longitude: '{location.longitude}'
         color: red
         image: teardrop-home
+
+  # the same weather from the other kind of source.  The station is the
+  # ground truth but only reports while it is staffed; the model always
+  # answers.  Each block signs itself at the foot - NZWD or Open-Meteo.
+  #model:
+  #  plugin: PiClock3.CurrentConditions
+  #  region: model
+  #  conditions-provider: openmeteo
   
   # Add Tide clock here
   tides:
     plugin: plugins.tides
     region: model
-    # station: "8720218"   # optional; Daytona Beach / nearby NOAA id
+    station: "8721120"   # optional; Daytona Beach Shores/ nearby NOAA id
     height-units: feet
     footer-height: 0.14
     footer-font-size: 0.38
