@@ -1,0 +1,36 @@
+name: Meridian
+description: The sun's daily circle over the pole, in ice blue on near-black
+
+background: 'background.jpg'
+
+kind-settings:
+  analog-clock:       {clock-images-folder: lightblue}
+  current-conditions: {icons-folder: icons-lightblue}
+  forecast:
+    icons-folder: icons-lightblue
+    layout:
+      wx:          {font-size: 0.13}
+      day:         {font-size: 0.11}
+      attribution: {font-size: 0.09, width: 0.5, align: left-top}
+  digital-clock:      {color: '#cfeeff', font-weight: normal}
+
+default:
+  font-size: 0.019
+  font-family: Arial
+  background-color: transparent
+  color: '#8fd6ee'
+
+borders:
+  default:
+    art: 'frame.png'
+    width: 0.0035
+    inset: 1.0
+  radar:
+    art: 'frame.png'
+    width: 0.0035
+    inset: 1.0
+
+styles:
+  date:
+    font-size: 0.5
+    qproperty-alignment: AlignCenter
