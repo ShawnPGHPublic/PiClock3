@@ -9,6 +9,7 @@ import subprocess
 import sys
 import threading
 import time
+import os
 
 # --- MQTT ---
 MQTT_HOST = "localhost"
@@ -22,12 +23,20 @@ MQTT_MOTION_TOPIC = "piclock/motion"
 
 # --- Display ---
 OUTPUT_NAME = "HDMI-A-1"
+#OUTPUT_MODE = "1280x1024@60.02Hz"
+#OUTPUT_TRANSFORM = "normal"
 
 # --- WWZMDiB PIR (HC-SR501 compatible), BCM numbering ---
 PIR_PIN = 17                 # OUT pin of the PIR, e.g. GPIO17 physical pin 11
 PIR_PULL_UP = False          # most HC-SR501 modules are active-high, no pull-up
 PIR_WARMUP_SEC = 45
 PIR_QUEUE_MAX = 50
+
+PIR_SAMPLE_RATE = 10
+PIR_QUEUE = 30
+PIR_THRESHOLD = 0.95
+
+MONITOR_CHECK_SECONDS = 1 * 60
 
 ON_PAYLOADS = {"on", "1", "true", "enable"}
 OFF_PAYLOADS = {"off", "0", "false", "disable"}
@@ -40,40 +49,51 @@ log = logging.getLogger("monitor-mqtt")
 
 motion_events: queue.Queue[str] = queue.Queue(maxsize=PIR_QUEUE_MAX)
 
+global curMonitorState
+
+os.environ.setdefault("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
+os.environ.setdefault("WAYLAND_DISPLAY", "wayland-0")
 
 def monitor_is_on() -> bool | None:
+    env = os.environ.copy()
+    env.setdefault("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
+    env.setdefault("WAYLAND_DISPLAY", os.environ.get("WAYLAND_DISPLAY", "wayland-0"))
+
     try:
         r = subprocess.run(
-            ["wlr-randr"],
+            ["wlopm"],
             check=True,
             capture_output=True,
             text=True,
+            env=env,
         )
     except (FileNotFoundError, subprocess.CalledProcessError) as e:
-        log.warning("Could not query wlr-randr: %s", e)
+        log.warning("Could not query wlopm: %s", e)
         return None
 
-    current = None
-    enabled = None
     for line in r.stdout.splitlines():
-        if not line.startswith(" ") and line.strip():
-            current = line.split()[0]
-        elif current == OUTPUT_NAME and "Enabled:" in line:
-            enabled = line.split("Enabled:", 1)[1].strip().lower()
-            break
+        parts = line.split()
+        if len(parts) < 2:
+            continue
+        name, state = parts[0], parts[-1].lower()
+        if name != OUTPUT_NAME:
+            continue
+        if state in {"on", "yes", "true"}:
+            return True
+        if state in {"off", "no", "false"}:
+            return False
+        log.warning("Unexpected wlopm state for %s: %r", OUTPUT_NAME, line)
+        return None
 
-    if enabled in {"yes", "true", "on"}:
-        return True
-    if enabled in {"no", "false", "off"}:
-        return False
-    log.warning("Could not parse Enabled for %s", OUTPUT_NAME)
+    log.warning("Could not parse wlopm status for %s", OUTPUT_NAME)
     return None
-
 
 def set_monitor(on: bool) -> bool:
     action = "--on" if on else "--off"
-    cmd = ["wlr-randr", "--output", OUTPUT_NAME, action]
+    # cmd = ["wlr-randr", "--output", OUTPUT_NAME, action,"--mode",OUTPUT_MODE,"--transform",OUTPUT_TRANSFORM]    
+    cmd = ["wlopm",action,OUTPUT_NAME]    
     log.info("Running: %s", " ".join(cmd))
+    
     try:
         r = subprocess.run(cmd, check=True, capture_output=True, text=True)
         if r.stdout.strip():
@@ -83,9 +103,9 @@ def set_monitor(on: bool) -> bool:
         log.info("Monitor %s", "ON" if on else "OFF")
         return True
     except FileNotFoundError:
-        log.error("wlr-randr not found on PATH")
+        log.error("wlopm not found on PATH")
     except subprocess.CalledProcessError as e:
-        log.error("wlr-randr failed (%s): %s", e.returncode, e.stderr)
+        log.error("wlopm failed (%s): %s", e.returncode, e.stderr)
     return False
 
 
@@ -109,8 +129,9 @@ def start_pir() -> None:
     pir = MotionSensor(
         PIR_PIN,
         pull_up=False,
-        queue_len=1,
-        sample_rate=10,
+        queue_len=PIR_QUEUE,
+        sample_rate=PIR_SAMPLE_RATE,
+        threshold=PIR_THRESHOLD
     )
     pir.when_motion = lambda: put("ON")
     pir.when_no_motion = lambda: put("OFF")
@@ -176,11 +197,11 @@ def publish_state(sock: socket.socket, on: bool) -> None:
 
 
 def publish_actual_state(sock: socket.socket) -> None:
-    state = monitor_is_on()
-    if state is None:
+    global curMonitorState
+    if curMonitorState is None:
         log.warning("Skipping monitor state publish")
         return
-    publish_state(sock, state)
+    publish_state(sock, curMonitorState)
 
 
 def drain_motion(sock: socket.socket) -> None:
@@ -232,13 +253,17 @@ def handle_publish(sock: socket.socket, header: int, payload: bytes) -> None:
         rest = rest[2:]
     msg = rest.decode("utf-8", errors="replace").strip().lower()
     log.info("Message on %s: %r", topic, msg)
+    global curMonitorState
+
     if topic != MQTT_TOPIC:
         return
     if msg in ON_PAYLOADS:
         if set_monitor(True):
+            curMonitorState = True
             publish_state(sock, True)
     elif msg in OFF_PAYLOADS:
         if set_monitor(False):
+            curMonitorState = False
             publish_state(sock, False)
     else:
         log.warning("Unknown payload %r", msg)
@@ -253,28 +278,61 @@ def session() -> None:
         sock.settimeout(0.5)
         mqtt_connect(sock)
         mqtt_subscribe(sock)
+
+        global curMonitorState
+        curMonitorState = monitor_is_on()
         publish_actual_state(sock)
+
+        log.info("Initial Monitor State: %s",curMonitorState)
+
+
+        stop = threading.Event()
+        monitor_thread = threading.Thread(
+            target=_publish_monitorstate_loop,
+            args=(sock, stop),
+            name="monitor-state",
+            daemon=True,
+        )
+        monitor_thread.start()
+
         last_ping = time.monotonic()
-        while True:
-            drain_motion(sock)
-            try:
-                header, payload = _read_packet(sock)
-            except socket.timeout:
+        try:
+            while True:
+                drain_motion(sock)
+                try:
+                    header, payload = _read_packet(sock)
+                except socket.timeout:
+                    if time.monotonic() - last_ping > 50:
+                        ping(sock)
+                        last_ping = time.monotonic()
+                    continue
+                ptype = header & 0xF0
+                if ptype == 0x30:
+                    handle_publish(sock, header, payload)
+                elif ptype == 0xD0:
+                    pass
+                elif ptype == 0xE0:
+                    raise ConnectionError("broker sent DISCONNECT")
                 if time.monotonic() - last_ping > 50:
                     ping(sock)
                     last_ping = time.monotonic()
-                continue
-            ptype = header & 0xF0
-            if ptype == 0x30:
-                handle_publish(sock, header, payload)
-            elif ptype == 0xD0:
-                pass
-            elif ptype == 0xE0:
-                raise ConnectionError("broker sent DISCONNECT")
-            if time.monotonic() - last_ping > 50:
-                ping(sock)
-                last_ping = time.monotonic()
+        finally:
+            stop.set()
+            monitor_thread.join(timeout=2)
 
+
+def _publish_monitorstate_loop(sock: socket.socket, stop: threading.Event) -> None:
+    while not stop.wait(MONITOR_CHECK_SECONDS):
+        try:
+            global curMonitorState
+            curState = monitor_is_on();
+            #log.info("Checking monitor state %s / %s",curState,curMonitorState)
+            if curState != curMonitorState:            
+                curMonitorState = curState
+                publish_actual_state(sock)
+            
+        except Exception:
+            log.exception("Periodic monitor state publish failed")
 
 def main() -> int:
     pir_thread = threading.Thread(target=start_pir, name="pir", daemon=True)
@@ -290,7 +348,6 @@ def main() -> int:
         except Exception as e:
             log.error("%s — retry in 5s", e)
             time.sleep(5)
-
 
 if __name__ == "__main__":
     sys.exit(main())
