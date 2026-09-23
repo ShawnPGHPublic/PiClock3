@@ -4,8 +4,8 @@ pages:
 language: en
 
 location:
-  latitude: 29.2108
-  longitude: -81.0228
+  latitude:  29.69
+  longitude:  -82.27167
   timezone:
 
 providers:

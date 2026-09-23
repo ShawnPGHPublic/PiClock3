@@ -1,23 +1,22 @@
-# PiClock3 - First Clean attempt at clock UI
+# PiClock3 - Show Tides chart and LED time
 #
-# The CleanFirst theme draws that rather than a photograph: the sun's daily
+# The FLTides theme draws that rather than a photograph: the sun's daily
 # circle, the horizon it crosses twice a year, and a spoke for every hour. From Daytona Beach, FL
 #
 pages:
-  clock-page: {order: 0, layout: CleanFirst, theme: CleanFirst}
-  maps-page:  {order: 1, layout: bigmaps, theme: CleanFirst}
+  clock-page: {order: 0, layout: FLTides, theme: FLTides}
+  maps-page:  {order: 1, layout: bigmaps, theme: FLTides}
 
 units: default
 
-# Flagler Beach, FL
+# Daytona Beach, FL
 location:
-  latitude: 29.4652
-  longitude: -81.20760
+  latitude: 29.2108
+  longitude: -81.0228 
 
   # Blank means the machine's own zone, which is right when the clock
   # sits where it is pointed.  Name a zone when it does not.
-  # McMurdo is the United States' station, but it keeps New Zealand
-  # time: everything flies in from Christchurch, so the clock that
+  # time: 
   # matters is the one at the other end of the flight.
   timezone: 
 # Providers supply data and occupy no region.
@@ -27,7 +26,7 @@ providers:
   openmeteo: {plugin: PiClock3.OpenMeteo}
 
   # an actual observation from a nearby field
-  metar: {plugin: PiClock3.Metar, METAR: KFIN}
+  metar: {plugin: PiClock3.Metar, METAR: KDAB}
 
   # base map under the radar - needs a key in ApiKeys.yaml
   mapbox:     {plugin: PiClock3.Mapbox}
@@ -68,6 +67,9 @@ widgets:
     # abbreviated where the classic column spells it out
     hour-format: '%a %-I%p'
 
+    layout:
+      icon: {width: .5}
+
   # the strip along the bottom of the maps page
   maps-caption:
     plugin: PiClock3.DigitalClock
@@ -86,7 +88,7 @@ widgets:
     region: maps
     base-provider: mapbox        # or googlemaps, if that is the key you got
     frame-provider: librewxr     # or rainviewer
-    label: 'Flagler Airport'
+    label: 'Airport'
     # the pale default is meant for dark satellite imagery and is the same
     # brightness as ice.  Outlining it keeps the color every other example
     # uses and still reads here, on snow and on open water both.
