@@ -243,6 +243,8 @@ def mqtt_subscribe(sock: socket.socket) -> None:
 
 
 def handle_publish(sock: socket.socket, header: int, payload: bytes) -> None:
+    global curMonitorState
+    
     qos = (header >> 1) & 0x03
     if len(payload) < 2:
         return
@@ -253,7 +255,6 @@ def handle_publish(sock: socket.socket, header: int, payload: bytes) -> None:
         rest = rest[2:]
     msg = rest.decode("utf-8", errors="replace").strip().lower()
     log.info("Message on %s: %r", topic, msg)
-    global curMonitorState
 
     if topic != MQTT_TOPIC:
         return
