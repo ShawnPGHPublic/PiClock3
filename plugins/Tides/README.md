@@ -5,6 +5,9 @@ Widget plugin: a smooth 24-hour NOAA tide curve with high/low times in the foote
 Data: `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter`  
 No API key.
 
+<img width="433" height="321" alt="image" src="https://github.com/user-attachments/assets/c250f7fb-7ebe-4b42-a632-fe15e8de335d" />
+
+
 ## Install
 
 From the PiClock3 checkout:
