@@ -14,6 +14,7 @@ location:
   latitude: 29.2108
   longitude: -81.0228 
 
+
   # Blank means the machine's own zone, which is right when the clock
   # sits where it is pointed.  Name a zone when it does not.
   # time: 
@@ -23,7 +24,28 @@ location:
 providers:
 
   # the daily forecast.  No key: Open-Meteo asks for none.
-  openmeteo: {plugin: PiClock3.OpenMeteo}
+#  openmeteo: {plugin: PiClock3.OpenMeteo}
+
+  openweathermap:
+    plugin: plugins.OpenWeatherMapWind
+    apikey: '{apikeys.owmapi}'
+    refresh: 30
+    forecast-days: 6    
+
+ # wrap Open-Meteo; only current temp comes from MQTT
+  mqttweather:
+    plugin: plugins.MqttWeather
+    weather-provider: openweathermap
+    mqtt-host: 192.168.244.50
+    mqtt-port: 1883
+    mqtt-username: 'DVES_USER'
+    mqtt-password: 'PqYR1IFWm'
+    mqtt-client-id: 'PICWeather'
+    mqtt-temp-topic: HomeDisplay/tempoutside/state
+    mqtt-humidity-topic: HomeDisplay/humidityoutside/state
+    mqtt-unit: F
+    # payload-key: temperature   # if the payload is {"temperature": 21.4}
+   
 
   # an actual observation from a nearby field
   metar: {plugin: PiClock3.Metar, METAR: KDAB}
@@ -57,9 +79,9 @@ widgets:
 
   # one day in each cell of the layout's forecast column
   forecast:
-    plugin: PiClock3.Forecast
+    plugin: plugins.ForecastWind
     region: forecast
-    forecast-provider: openmeteo
+    forecast-provider: openweathermap
     # six cells along the foot: the next three hours, then three days
     hourly: 3
     daily: 3
@@ -79,9 +101,18 @@ widgets:
     font-size: 0.75
 
   current-conditions:
-    plugin: PiClock3.CurrentConditions
+    plugin: plugins.CurrentWind
     region: current
-    conditions-provider: metar
+    conditions-provider: mqttweather
+
+  # Add Tide clock here
+  tides:
+    plugin: plugins.tides
+    region: model
+    station: "8721120"   # optional; Daytona Beach Shores/ nearby NOAA id
+    height-units: feet
+    footer-height: 0.14
+    footer-font-size: 0.38
 
   radar1:
     plugin: PiClock3.MapLoop
@@ -103,23 +134,7 @@ widgets:
           longitude: '{location.longitude}'
         color: red
         image: teardrop-home
-
-  # the same weather from the other kind of source.  The station is the
-  # ground truth but only reports while it is staffed; the model always
-  # answers.  Each block signs itself at the foot - NZWD or Open-Meteo.
-  #model:
-  #  plugin: PiClock3.CurrentConditions
-  #  region: model
-  #  conditions-provider: openmeteo
-  
-  # Add Tide clock here
-  tides:
-    plugin: plugins.tides
-    region: model
-    station: "8721120"   # optional; Daytona Beach Shores/ nearby NOAA id
-    height-units: feet
-    footer-height: 0.14
-    footer-font-size: 0.38
+    
   radar2:
     plugin: PiClock3.MapLoop
     region: radar
@@ -129,28 +144,8 @@ widgets:
     label-outline: true
     zoom: 5
     center:
-      latitude:  29.69
-      longitude:  -82.27167
-
-  radar3:
-    plugin: PiClock3.MapLoop
-    region: radars.1
-    base-provider: mapbox        # or googlemaps, if that is the key you got
-    frame-provider: librewxr     # or rainviewer
-    zoom: 7
-    center:
-      latitude: '{location.latitude}'
-      longitude: '{location.longitude}'
-
-  radar4:
-    plugin: PiClock3.MapLoop
-    region: radars.2
-    base-provider: mapbox        # or googlemaps, if that is the key you got
-    frame-provider: librewxr     # or rainviewer
-    zoom: 11
-    center:
-      latitude: '{location.latitude}'
-      longitude: '{location.longitude}'
+      latitude:  28.53834	# Orlando
+      longitude:  -81.37924
 
 logging-level: debug
 
