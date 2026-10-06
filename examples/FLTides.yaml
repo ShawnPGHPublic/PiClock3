@@ -9,10 +9,10 @@ pages:
 
 units: default
 
-# Flagler Beach, FL
+# Daytona Beach, FL
 location:
-  latitude: 29.4652
-  longitude: -81.20760
+  latitude:  28.53834     # Orlando
+  longitude:  -81.37924
 
 
   # Blank means the machine's own zone, which is right when the clock
@@ -36,7 +36,7 @@ providers:
   mqttweather:
     plugin: plugins.MqttWeather
     weather-provider: openweathermap
-    mqtt-host: 192.168.244.50
+    mqtt-host: <ip>
     mqtt-port: 1883
     mqtt-username: '{apikeys.mqtt-username}'
     mqtt-password: '{apikeys.mqtt-password}'
@@ -148,7 +148,7 @@ widgets:
     label-outline: true
     zoom: 5
     center:
-      latitude:  28.53834	       # Orlando
+      latitude:  28.53834         # Orlando
       longitude:  -81.37924
 
 logging-level: debug
