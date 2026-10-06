@@ -9,10 +9,10 @@ pages:
 
 units: default
 
-# Daytona Beach, FL
+# Flagler Beach, FL
 location:
-  latitude: 29.2108
-  longitude: -81.0228 
+  latitude: 29.4652
+  longitude: -81.20760
 
 
   # Blank means the machine's own zone, which is right when the clock
@@ -38,13 +38,17 @@ providers:
     weather-provider: openweathermap
     mqtt-host: 192.168.244.50
     mqtt-port: 1883
-    mqtt-username: 'DVES_USER'
-    mqtt-password: 'PqYR1IFWm'
+    mqtt-username: '{apikeys.mqtt-username}'
+    mqtt-password: '{apikeys.mqtt-password}'
     mqtt-client-id: 'PICWeather'
-    mqtt-temp-topic: HomeDisplay/tempoutside/state
-    mqtt-humidity-topic: HomeDisplay/humidityoutside/state
-    mqtt-unit: F
-    # payload-key: temperature   # if the payload is {"temperature": 21.4}
+
+    mqtt-topics:
+      temp:       {topic: HomeDisplay/tempoutside/state, unit: F}
+      # humidity:   {topic: HomeDisplay/humidityoutside/state}
+      # wind:       {topic: ha/sensor/outside_wind_speed/state, unit: mph}
+      # wind-dir:   {topic: ha/sensor/outside_wind_direction/state}
+      # gust:       {topic: ha/sensor/cotech_wind_gust/state, unit: mph}
+      # feels-like: {topic: ha/sensor/outside_feels_like/state, unit: F}    
    
 
   # an actual observation from a nearby field
@@ -144,7 +148,7 @@ widgets:
     label-outline: true
     zoom: 5
     center:
-      latitude:  28.53834	# Orlando
+      latitude:  28.53834	       # Orlando
       longitude:  -81.37924
 
 logging-level: debug
